@@ -1,0 +1,36 @@
+name: Oats5 Cloud Recorder
+
+on:
+  repository_dispatch:
+    types: [start-recording]
+
+jobs:
+  record-session:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Chrome & Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgbm-dev wget gnupg
+          npm install puppeteer puppeteer-stream aws-sdk
+
+      - name: Run Recording Bot
+        env:
+          ROOM_URL: ${{ github.event.client_payload.room_url }}
+          ROOM_NAME: ${{ github.event.client_payload.room_name }}
+          RECORDING_ID: ${{ github.event.client_payload.recording_id }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "ap-southeast-1"
+          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node record-script.js
