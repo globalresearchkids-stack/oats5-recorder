@@ -16,11 +16,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Chrome & Dependencies
+      - name: Install Chrome & Graphics Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgbm-dev wget gnupg
-          npm install puppeteer puppeteer-stream aws-sdk
+          # xvfb is the "fake monitor" that fixes your error
+          sudo apt-get install -y libgbm-dev wget gnupg xvfb 
+          # Update to AWS SDK v3 packages
+          npm install puppeteer puppeteer-stream @aws-sdk/client-s3 @aws-sdk/lib-storage
 
       - name: Run Recording Bot
         env:
@@ -33,4 +35,5 @@ jobs:
           AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node record-script.js
+        # We run the script inside the "fake monitor" environment
+        run: xvfb-run --auto-servernum node record-script.js
