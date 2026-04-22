@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Node Dependencies
         run: |
-          npm install puppeteer puppeteer-stream @supabase/supabase-js
+          npm install puppeteer puppeteer-stream @supabase/supabase-js @aws-sdk/client-s3 @aws-sdk/lib-storage
           
       - name: Run recorder
         env:
