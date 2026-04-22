@@ -1,12 +1,31 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Oats5 Cloud Recorder — GitHub Actions Workflow
+#
+# Triggered by: repository_dispatch  event_type: "start-recording"
+# Payload:      { room_name, recording_id }
+#
+# The job launches a headful Chrome inside Xvfb, opens the recorder page,
+# captures the tab via puppeteer-stream, polls Supabase for a stop signal,
+# then uploads the .webm to the oats-recordings storage bucket and
+# calls finalize-recording to mark the DB row as completed.
+# ─────────────────────────────────────────────────────────────────────────────
+
 name: Oats5 Cloud Recorder
 
 on:
   repository_dispatch:
     types: [start-recording]
 
+# Only one recording per room at a time
+concurrency:
+  group: record-${{ github.event.client_payload.room_name }}
+  cancel-in-progress: false
+
 jobs:
   record-session:
     runs-on: ubuntu-latest
+    timeout-minutes: 300   # 5 hour hard cap
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -16,24 +35,34 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Chrome & Graphics Dependencies
+      - name: Install System Dependencies
         run: |
-          sudo apt-get update
-          # xvfb is the "fake monitor" that fixes your error
-          sudo apt-get install -y libgbm-dev wget gnupg xvfb 
-          # Update to AWS SDK v3 packages
-          npm install puppeteer puppeteer-stream @aws-sdk/client-s3 @aws-sdk/lib-storage
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libgbm1 \
+            libnss3 \
+            libatk1.0-0 \
+            libatk-bridge2.0-0 \
+            libcups2 \
+            libdrm2 \
+            libxkbcommon0 \
+            libxcomposite1 \
+            libxdamage1 \
+            libxrandr2 \
+            libpango-1.0-0 \
+            libcairo2 \
+            libasound2t64 \
+            fonts-liberation \
+            xdg-utils
+
+      - name: Install Node Dependencies
+        run: npm ci
 
       - name: Run Recording Bot
         env:
-          ROOM_URL: ${{ github.event.client_payload.room_url }}
           ROOM_NAME: ${{ github.event.client_payload.room_name }}
           RECORDING_ID: ${{ github.event.client_payload.recording_id }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: "ap-southeast-1"
-          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        # We run the script inside the "fake monitor" environment
-        run: xvfb-run --auto-servernum node record-script.js
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node record-script.js
