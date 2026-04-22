@@ -20,9 +20,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgbm-dev wget gnupg xvfb libxss1
 
+      - name: Install Node Dependencies
+        run: |
+          npm install puppeteer puppeteer-stream @supabase/supabase-js
+          
       - name: Run recorder
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
