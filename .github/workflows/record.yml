@@ -26,11 +26,12 @@ jobs:
       - name: Run recorder
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           APP_BASE_URL: ${{ github.event.client_payload.app_base_url }}
           ROOM_NAME: ${{ github.event.client_payload.room_name }}
           RECORDING_ID: ${{ github.event.client_payload.recording_id }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_BUCKET: ${{ secrets.AWS_BUCKET_NAME }}
           S3_REGION: ${{ secrets.S3_REGION }}
+        run: node recorder.js
