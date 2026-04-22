@@ -102,17 +102,15 @@ async function main() {
 
     // 3. Launch browser
     log('Launching Chrome…');
-    browser = await puppeteer.launch({
-      headless: false,
+    const browser = await puppeteer.launch({
+      headless: false,  // needed for capture
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-gpu',
-        '--disable-dev-shm-usage',
         '--window-size=1920,1080',
-        '--autoplay-policy=no-user-gesture-required',
-        // DO NOT add --disable-extensions (puppeteer-stream needs its extension)
       ],
+      // Do NOT set executablePath — let Puppeteer use its bundled Chrome
     });
 
     const page = await browser.newPage();
