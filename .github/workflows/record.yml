@@ -1,35 +1,36 @@
-name: record-session
+# .github/workflows/record.yml — GitHub Actions workflow for oats5-recorder
+# Triggered by repository_dispatch from the manage-recording edge function
+
+name: Record Classroom
 
 on:
   repository_dispatch:
-    types:
-      - start-recording
-      - stop-recording
+    types: [start-recording, stop-recording]
 
 jobs:
   record:
     if: github.event.action == 'start-recording'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Install Chrome for Puppeteer
-        run: npx puppeteer browsers install chrome
-
-      - name: Record session
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node record-script.js
+      - name: Run recorder
         env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          APP_BASE_URL: ${{ github.event.client_payload.app_base_url }}
           ROOM_NAME: ${{ github.event.client_payload.room_name }}
           RECORDING_ID: ${{ github.event.client_payload.recording_id }}
-          APP_BASE_URL: ${{ github.event.client_payload.app_base_url }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_REGION: ${{ secrets.S3_REGION }}
