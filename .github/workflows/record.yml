@@ -40,4 +40,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           S3_BUCKET: ${{ secrets.AWS_BUCKET_NAME }}
           S3_REGION: ${{ secrets.S3_REGION }}
-        run: node recorder.js
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node record-script.js
