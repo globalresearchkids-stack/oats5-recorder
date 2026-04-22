@@ -60,7 +60,7 @@ npm install
 
 export ROOM_NAME="your-timetable-session-uuid"
 export RECORDING_ID="your-class-recordings-row-id"
-export SUPABASE_URL="https://dkhglomszvuomthtslij.supabase.co"
+export SUPABASE_URL="x"
 export SUPABASE_SERVICE_ROLE_KEY="your-key"
 
 # Requires Xvfb on Linux, or a display on macOS
