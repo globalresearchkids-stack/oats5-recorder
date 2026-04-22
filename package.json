@@ -1,14 +1,13 @@
 {
   "name": "oats5-recorder",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Oats5 cloud recording bot — Puppeteer-based session recorder for GitHub Actions",
+  "description": "OATS5 classroom recorder bot",
   "scripts": {
     "record": "node record-script.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
-    "puppeteer": "^23.0.0",
-    "puppeteer-stream": "^3.0.22"
+    "puppeteer": "^24.0.0"
   }
 }
