@@ -216,7 +216,7 @@ async function main() {
       recording_id: RECORDING_ID,
       s3_key: s3Key,
       action: 'completed',
-    }),a
+    }),
   });
 
   if (finalizeRes.ok) {
