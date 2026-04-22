@@ -50,7 +50,7 @@ The bot polls the database — **no separate stop workflow is needed**.
 
 | Secret | Description |
 |--------|-------------|
-| `SUPABASE_URL` | `https://dkhglomszvuomthtslij.supabase.co` |
+| `SUPABASE_URL` | `x` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for the Supabase project |
 
 ## Local Testing
