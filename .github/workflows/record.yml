@@ -29,6 +29,9 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
           APP_BASE_URL: ${{ github.event.client_payload.app_base_url }}
           ROOM_NAME: ${{ github.event.client_payload.room_name }}
           RECORDING_ID: ${{ github.event.client_payload.recording_id }}
@@ -37,3 +40,30 @@ jobs:
           S3_BUCKET: ${{ secrets.AWS_BUCKET_NAME }}
           S3_REGION: ${{ secrets.S3_REGION }}
         run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node record-script.js
+
+  stop:
+    if: github.event.action == 'stop-recording'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node Dependencies
+        run: npm install
+
+      - name: Stop recording
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RECORDING_ID: ${{ github.event.client_payload.recording_id }}
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+          supabase.from('class_recordings').update({ status: 'stopping' }).eq('id', process.env.RECORDING_ID).then(() => console.log('Recording stopped'));
+          "

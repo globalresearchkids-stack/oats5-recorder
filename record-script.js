@@ -2,12 +2,16 @@ const puppeteer = require('puppeteer');
 const { launch, getStream } = require('puppeteer-stream');
 const { createClient } = require('@supabase/supabase-js');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { AccessToken } = require('livekit-server-sdk');
 const fs = require('fs');
 const path = require('path');
 
 // ── Configuration ──
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
+const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
+const LIVEKIT_URL = process.env.LIVEKIT_URL;
 const APP_BASE_URL = process.env.APP_BASE_URL || 'https://oats5.com';
 const ROOM_NAME = process.env.ROOM_NAME;
 const RECORDING_ID = process.env.RECORDING_ID;
@@ -33,39 +37,21 @@ async function main() {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-  // ── Step 1: Fetch LiveKit token ──
-  log('Fetching LiveKit token from get-livekit-token edge function…');
+  // ── Step 1: Generate LiveKit token ──
+  log('Generating LiveKit token locally…');
   
-  const tokenRes = await fetch(`${SUPABASE_URL}/functions/v1/get-livekit-token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-      'apikey': SUPABASE_SERVICE_KEY, // FIXED: Added required Supabase apikey header
-    },
-    body: JSON.stringify({
-      roomName: ROOM_NAME,
-      participantName: 'Recorder Bot',
-      identity: `recorder-${RECORDING_ID.substring(0, 8)}`, // <-- ADD THIS BACK
-      userId: `recorder-${RECORDING_ID.substring(0, 8)}`,   // Keep this for Lovable's future updates
-    }),
+  const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+    identity: `recorder-${RECORDING_ID.substring(0, 8)}`,
   });
-
-  if (!tokenRes.ok) {
-    const errText = await tokenRes.text();
-    await supabase.from('class_recordings').update({
-      status: 'failed',
-      tags: { token_fetch_error: `HTTP ${tokenRes.status}: ${errText.slice(0, 500)}` },
-    }).eq('id', RECORDING_ID);
-    fatal(`Failed to fetch LiveKit token: HTTP ${tokenRes.status} — ${errText.slice(0, 300)}`);
-  }
-
-  const tokenData = await tokenRes.json();
-  if (!tokenData.token || !tokenData.url) fatal('Invalid token response:', JSON.stringify(tokenData));
-
-  const LK_TOKEN = tokenData.token;
-  const LK_URL = tokenData.url;
-  log('✅ Got LiveKit token');
+  at.addGrant({
+    roomJoin: true,
+    room: ROOM_NAME,
+    canPublish: false,
+    canSubscribe: true,
+  });
+  const LK_TOKEN = await at.toJwt();
+  const LK_URL = LIVEKIT_URL;
+  log('✅ Generated LiveKit token locally');
 
   // ── Step 2: Update recording status ──
   await supabase.from('class_recordings').update({ status: 'recording' }).eq('id', RECORDING_ID);
@@ -139,18 +125,11 @@ async function main() {
   log('✅ Uploaded to S3');
 
   // ── Step 8: Finalize ──
-  const finalizeRes = await fetch(`${SUPABASE_URL}/functions/v1/finalize-recording`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-      'apikey': SUPABASE_SERVICE_KEY
-    },
-    body: JSON.stringify({ recording_id: RECORDING_ID, s3_key: s3Key, action: 'completed' }),
-  });
-
-  if (finalizeRes.ok) log('✅ Recording finalized successfully');
-  else log('⚠️ Finalize call returned:', finalizeRes.status, await finalizeRes.text());
+  await supabase.from('class_recordings').update({
+    status: 'completed',
+    s3_key: s3Key
+  }).eq('id', RECORDING_ID);
+  log('✅ Recording finalized successfully');
 
   fs.unlinkSync(outputPath);
   log('Done.');
