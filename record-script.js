@@ -46,7 +46,8 @@ async function main() {
     body: JSON.stringify({
       roomName: ROOM_NAME,
       participantName: 'Recorder Bot',
-      identity: `recorder-${RECORDING_ID.substring(0, 8)}`, // FIXED: Prevents "missing sub claim" error
+      identity: `recorder-${RECORDING_ID.substring(0, 8)}`, // <-- ADD THIS BACK
+      userId: `recorder-${RECORDING_ID.substring(0, 8)}`,   // Keep this for Lovable's future updates
     }),
   });
 
