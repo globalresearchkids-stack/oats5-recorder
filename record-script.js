@@ -31,6 +31,7 @@ function fatal(...args) {
 
 async function main() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) fatal('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+  if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET || !LIVEKIT_URL) fatal('Missing LIVEKIT_API_KEY, LIVEKIT_API_SECRET, or LIVEKIT_URL');
   if (!ROOM_NAME || !RECORDING_ID) fatal('Missing ROOM_NAME or RECORDING_ID from dispatch payload');
 
   log('Starting recorder for room:', ROOM_NAME, 'recording:', RECORDING_ID);

@@ -82,5 +82,7 @@ xvfb-run --auto-servernum node record-script.js
 | `Missing X server` | No virtual display | Ensure `xvfb-run` wraps the command |
 | `ERR_BLOCKED_BY_CLIENT` | `--disable-extensions` flag | Do NOT use that flag (puppeteer-stream needs its extension) |
 | `LiveKit token generation failed` | Missing or invalid LiveKit secrets | Check `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` secrets |
+| `Workflow not triggering` | Incorrect event type check | Ensure repository dispatch uses `event_type` or `action` in payload |
+| `Stop not working` | Stop job failed or recorder not polling | Check workflow logs for stop job errors; verify recorder polls DB |
 | `Room connection timeout` | No teacher in the room yet | Bot should only be dispatched after teacher joins |
 | `Recording file too small` | Capture didn't start properly | Check Chrome flags and Xvfb resolution |
