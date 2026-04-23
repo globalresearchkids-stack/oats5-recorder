@@ -1,6 +1,3 @@
-# .github/workflows/record.yml — GitHub Actions workflow for oats5-recorder
-# Triggered by repository_dispatch from the manage-recording edge function
-
 name: Record Classroom
 
 on:
@@ -26,8 +23,7 @@ jobs:
           sudo apt-get install -y libgbm-dev wget gnupg xvfb libxss1 libasound2t64
 
       - name: Install Node Dependencies
-        run: |
-          npm install puppeteer puppeteer-stream @supabase/supabase-js @aws-sdk/client-s3 @aws-sdk/lib-storage
+        run: npm install
           
       - name: Run recorder
         env:
