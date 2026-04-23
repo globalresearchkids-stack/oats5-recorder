@@ -1,10 +1,13 @@
 {
   "name": "oats5-recorder",
   "version": "1.0.0",
-  "private": false,
+  "private": true,
   "description": "Puppeteer-based session recorder for Oats5",
   "main": "record-script.js",
   "dependencies": {
-    "puppeteer": "^24.0.0"
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@supabase/supabase-js": "^2.0.0",
+    "puppeteer": "^24.0.0",
+    "puppeteer-stream": "^2.1.1"
   }
 }
