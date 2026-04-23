@@ -91,12 +91,27 @@ async function main() {
   const POLL_INTERVAL = 10000;
   const MAX_DURATION = 4 * 60 * 60 * 1000;
   const startTime = Date.now();
+  let stopRequested = false;
 
-  while (Date.now() - startTime < MAX_DURATION) {
+  process.on('SIGTERM', () => {
+    stopRequested = true;
+    log('SIGTERM received, requesting stop');
+  });
+
+  process.on('SIGINT', () => {
+    stopRequested = true;
+    log('SIGINT received, requesting stop');
+  });
+
+  while (Date.now() - startTime < MAX_DURATION && !stopRequested) {
     await new Promise(r => setTimeout(r, POLL_INTERVAL));
     const { data: rec } = await supabase.from('class_recordings').select('status').eq('id', RECORDING_ID).maybeSingle();
     if (rec?.status === 'stopping' || rec?.status === 'failed') {
       log('Stop signal received, status:', rec.status);
+      break;
+    }
+    if (stopRequested) {
+      log('Stop requested via signal');
       break;
     }
   }
@@ -126,9 +141,15 @@ async function main() {
   log('✅ Uploaded to S3');
 
   // ── Step 8: Finalize ──
+  const recordingUrl = `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${encodeURIComponent(s3Key)}`;
+  const endedAt = new Date().toISOString();
+  const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
+
   await supabase.from('class_recordings').update({
     status: 'completed',
-    s3_key: s3Key
+    recording_url: recordingUrl,
+    ended_at: endedAt,
+    duration_seconds: durationSeconds,
   }).eq('id', RECORDING_ID);
   log('✅ Recording finalized successfully');
 
