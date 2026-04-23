@@ -40,7 +40,9 @@ Runs as a GitHub Actions workflow, triggered by the Oats5 app.
 ## Stop Flow
 
 The recording stops when:
-- The app dispatches `stop-recording` → GitHub Actions sets status to `stopping`
+- The app dispatches `stop-recording` as a separate repository dispatch event
+- The stop workflow updates `class_recordings.status` to `stopping`
+- The recorder job sees `stopping` while polling and exits
 - The last teacher leaves → app sets status to `stopping`
 - The 4-hour hard cap is reached
 - The GitHub Actions job times out (5 hours)

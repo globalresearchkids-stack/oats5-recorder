@@ -1,0 +1,52 @@
+name: Stop Recorder
+
+on:
+  repository_dispatch:
+    types: [stop-recording]
+
+jobs:
+  stop:
+    if: github.event_name == 'repository_dispatch' && (github.event.action == 'stop-recording' || github.event_type == 'stop-recording')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Debug event
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Event type: ${{ github.event_type }}"
+          echo "Event action: ${{ github.event.action }}"
+          echo "Payload keys: $(echo '${{ toJson(github.event.client_payload) }}' | jq -r 'keys[]' 2>/dev/null || echo 'No payload or jq not available')"
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node Dependencies
+        run: npm install
+
+      - name: Stop recording
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RECORDING_ID: ${{ github.event.client_payload.recording_id }}
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          async function stop() {
+            if (!process.env.RECORDING_ID) {
+              console.error('Missing RECORDING_ID in payload');
+              process.exit(1);
+            }
+            const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+            const { error } = await supabase.from('class_recordings').update({ status: 'stopping' }).eq('id', process.env.RECORDING_ID);
+            if (error) {
+              console.error('Failed to update recording status:', error);
+              process.exit(1);
+            }
+            console.log('Recording status set to stopping');
+          }
+          stop();
+          "
