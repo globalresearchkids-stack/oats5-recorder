@@ -46,7 +46,7 @@ async function main() {
     body: JSON.stringify({
       roomName: ROOM_NAME,
       participantName: 'Recorder Bot',
-      userId: `recorder-${RECORDING_ID.substring(0, 8)}`, // FIXED: Prevents "missing sub claim" error
+      identity: `recorder-${RECORDING_ID.substring(0, 8)}`, // FIXED: Prevents "missing sub claim" error
     }),
   });
 
